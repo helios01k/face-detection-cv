@@ -1,7 +1,7 @@
 import cv2
 import time
 
-# TODO: frames per second has been commented. this is because my current solution is only incrementing and not showing expected results, will fix later
+# TODO: fps has been commented. this is because my current solution is only incrementing and not showing expected results, will fix later
 
 class Text:
     def __init__(self):
