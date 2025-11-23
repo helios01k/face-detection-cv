@@ -1,8 +1,12 @@
 import cv2
+import mediapipe
 
 # TODO: fps has been commented. this is because my current solution is only incrementing and not showing expected results, will fix later
+# TODO: no longer using cv2 for image recognition
 
-face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+#face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+mpf = mediapipe.solutions.face_detection
+face_detection = mpf.FaceDetection(model_selection=1, min_detection_confidence=0.6)
 
 class Redact:
     def __init__(self):
@@ -11,25 +15,37 @@ class Redact:
     @staticmethod
     def create_box(frame, x, y, w, h, _type):
 
-        point1 = (x, y)
-        point2 = (
-            x + w + 150,
-            y + h + 150,
-        )
+        # this is for white box
+        padding = 0
 
+        x1 = x
+        y1 = y
+        x2 = x + w
+        y2 = y + h
 
-        if _type == "SENSORY":
-            # TODO: Sensory will show what the SCRAMBLE is detecting; implement later
-            print("Will implement this later; ignore for now")
-            return
+        r_point1 = (x1, y1)
+        r_point2 = (x2, y2)
 
-        cv2.rectangle(
-            img=frame,
-            pt1 = point1,
-            pt2 = point2,
-            color = (0,0,0),
-            thickness = -1
-        )
+        s_point1 = (x1 + padding, y1 + padding)
+        s_point2 = (x2 - padding, y2 - padding)
+
+        match _type:
+            case "REDACT":
+                cv2.rectangle(
+                    img=frame,
+                    pt1 = r_point1,
+                    pt2 = r_point2,
+                    color = (0,0,0),
+                    thickness = -1
+                )
+            case "SENSORY":
+                cv2.rectangle(
+                    img=frame,
+                    pt1 = s_point1,
+                    pt2 = s_point2,
+                    color = (255, 255, 255),
+                    thickness = 2
+                )
 
 class Camera:
     def __init__(self):
@@ -60,21 +76,40 @@ class Camera:
 
         while self.reval:
 
+            amplify_text = Text(default_position="TOP_LEFT")
+            amplify_text.set_text("SCRAMBLE_PROTOTYPE // HELIOS")
+
             self.reval, self.frame = self.vc.read()
             # BELOW <RESIZE FRAMES>
             self.frame = cv2.resize(self.frame, self.window_size, interpolation=cv2.INTER_AREA)
 
             position_text = Text(default_position="TOP_LEFT")
-            amplify_text = Text(default_position="BOTTOM_LEFT")
 
-            grayscale = cv2.cvtColor(self.frame, cv2.COLOR_BGR2GRAY)
-            faces = face_cascade.detectMultiScale(grayscale, scaleFactor=1.1, minNeighbors=5, minSize=(30,30))
+            rgb_frame = cv2.cvtColor(self.frame, cv2.COLOR_BGR2RGB)
+            results = face_detection.process(rgb_frame)
 
-            for (x, y, w, h) in faces:
+            #faces = face_cascade.detectMultiScale(grayscale, scaleFactor=1.1, minNeighbors=5, minSize=(30,30))
+
+            #for (x, y, w, h) in faces:
                 #position_text.set_text(f"detection: {x},{y} | {w}, {h}")
                 #amplify_text.set_text("placeholder for now")
-                Redact.create_box(frame=self.frame, x=x, y=y, w=w, h=h, _type="0")
+            #    Redact.create_box(frame=self.frame, x=x, y=y, w=w, h=h, _type="0")
 
+            if results.detections:
+                for detection in results.detections:
+                    box = detection.location_data.relative_bounding_box
+                    h, w, _ = self.frame.shape
+
+                    x = int(box.xmin * w)
+                    y = int(box.ymin * h)
+                    ww = int(box.width * w)
+                    hh = int(box.height * h)
+
+                    Redact.create_box(frame=self.frame, x=x, y=y, w=ww, h=hh, _type="REDACT")
+                    Redact.create_box(frame=self.frame, x=x, y=y, w=ww, h=hh, _type = "SENSORY")
+                    # detection.score[0] => precentage of confidence
+
+            amplify_text.draw(self.frame)
             position_text.draw(self.frame)
             cv2.imshow(self.window_title, self.frame)
 
