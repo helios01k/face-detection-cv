@@ -2,6 +2,35 @@ import cv2
 
 # TODO: fps has been commented. this is because my current solution is only incrementing and not showing expected results, will fix later
 
+face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+
+class Redact:
+    def __init__(self):
+        pass
+
+    @staticmethod
+    def create_box(frame, x, y, w, h, _type):
+
+        point1 = (x, y)
+        point2 = (
+            x + w + 150,
+            y + h + 150,
+        )
+
+
+        if _type == "SENSORY":
+            # TODO: Sensory will show what the SCRAMBLE is detecting; implement later
+            print("Will implement this later; ignore for now")
+            return
+
+        cv2.rectangle(
+            img=frame,
+            pt1 = point1,
+            pt2 = point2,
+            color = (0,0,0),
+            thickness = -1
+        )
+
 class Camera:
     def __init__(self):
 
@@ -35,10 +64,18 @@ class Camera:
             # BELOW <RESIZE FRAMES>
             self.frame = cv2.resize(self.frame, self.window_size, interpolation=cv2.INTER_AREA)
 
-            test_text = Text(default_position="TOP_LEFT")
-            test_text.set_text("amin is so fake man to be honest with you")
-            test_text.draw(self.frame)
+            position_text = Text(default_position="TOP_LEFT")
+            amplify_text = Text(default_position="BOTTOM_LEFT")
 
+            grayscale = cv2.cvtColor(self.frame, cv2.COLOR_BGR2GRAY)
+            faces = face_cascade.detectMultiScale(grayscale, scaleFactor=1.1, minNeighbors=5, minSize=(30,30))
+
+            for (x, y, w, h) in faces:
+                #position_text.set_text(f"detection: {x},{y} | {w}, {h}")
+                #amplify_text.set_text("placeholder for now")
+                Redact.create_box(frame=self.frame, x=x, y=y, w=w, h=h, _type="0")
+
+            position_text.draw(self.frame)
             cv2.imshow(self.window_title, self.frame)
 
             key = cv2.waitKey(20)
