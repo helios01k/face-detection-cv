@@ -36,7 +36,7 @@ class Camera:
             self.frame = cv2.resize(self.frame, self.window_size, interpolation=cv2.INTER_AREA)
 
             test_text = Text(default_position="TOP_LEFT")
-            test_text.set_text("hello rustsussy")
+            test_text.set_text("amin is so fake man to be honest with you")
             test_text.draw(self.frame)
 
             cv2.imshow(self.window_title, self.frame)
