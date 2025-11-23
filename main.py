@@ -1,25 +1,6 @@
 import cv2
-import time
 
 # TODO: fps has been commented. this is because my current solution is only incrementing and not showing expected results, will fix later
-
-class Text:
-    def __init__(self):
-        self.text = None
-
-    def set_text(self, _text):
-        self.text = _text
-
-    def draw(self, frame):
-        cv2.putText(
-            img=frame,
-            text=self.text,
-            org=(100, 100),
-            fontFace=cv2.FONT_HERSHEY_SIMPLEX,
-            fontScale=4,
-            color=(0, 255, 0),
-            thickness=8
-        )
 
 class Camera:
     def __init__(self):
@@ -31,8 +12,7 @@ class Camera:
         #self.width, self.height = 1280, 720
         self.width, self.height = 1080, 1080
 
-        #self.frame_count = 0
-        #self.start = time.time()
+        self.window_size = (1920, 1080)
 
         cv2.namedWindow(self.window_title)
 
@@ -52,15 +32,12 @@ class Camera:
         while self.reval:
 
             self.reval, self.frame = self.vc.read()
-            self.frame_count += 1
-            self.frame = cv2.resize(self.frame, (1920, 1080), interpolation=cv2.INTER_AREA)
+            # BELOW <RESIZE FRAMES>
+            self.frame = cv2.resize(self.frame, self.window_size, interpolation=cv2.INTER_AREA)
 
-            #elapsed = time.time() - self.start
-            #fps = self.frame_count / elapsed
-
-            #h1 = Text()
-            #h1.set_text(f"FPS : {fps:.2f}")
-            #h1.draw(frame=self.frame)
+            test_text = Text(default_position="TOP_LEFT")
+            test_text.set_text("hello rustsussy")
+            test_text.draw(self.frame)
 
             cv2.imshow(self.window_title, self.frame)
 
@@ -72,6 +49,57 @@ class Camera:
     def force_exit(self):
         self.vc.release()
         cv2.destroyWindow(self.window_title)
+
+
+class Text:
+    def __init__(self, default_position : str):
+        self.text = None
+        self.default_position = default_position
+
+    def set_text(self, _text):
+        self.text = _text
+
+    def _getDefaultPosition(self, frame, text_w, text_h):
+        h, w, _ = frame.shape  # frame height + width
+
+        match self.default_position:
+            case "TOP_LEFT":
+                return 10, 10 + text_h
+
+            case "TOP_RIGHT":
+                return w - text_w - 10, 10 + text_h
+
+            case "BOTTOM_LEFT":
+                return 10, h - 10
+
+            case "BOTTOM_RIGHT":
+                return w - text_w - 10, h - 10
+
+            case _:
+                return 10, 10 + text_h
+
+    def draw(self, frame):
+        font = cv2.FONT_HERSHEY_SIMPLEX
+        # this should be like fine-tuned
+        # TODO: push below variables to self __init__ ?
+        fontScale = 1
+        thickness = 2
+
+        (text_w, text_h), baseline = cv2.getTextSize(
+            self.text, font, fontScale, thickness
+        )
+
+        org = self._getDefaultPosition(frame, text_w, text_h)
+
+        cv2.putText(
+            img=frame,
+            text=self.text,
+            org=org,
+            fontFace=font,
+            fontScale=fontScale,
+            color=(0, 255, 0),
+            thickness=thickness
+        )
 
 
 _object = Camera()
