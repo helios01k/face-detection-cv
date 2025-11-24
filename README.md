@@ -1,14 +1,11 @@
-# face-detection-cv 
-
-hi i am currently just playing around with *opencv* 
-
-## end goals ? 
-- develop face detection
-- optimize for rasp pi 5 w/ ai hat
-- do some cool ui stuff on opencv-window 
-- numpy maybe?....
+# SCRAMBLE - FACE REDACTION
+Based on the "SCRAMBLE Goggles" technology in the **SCP Foundation** fictional lore; this is a real working version of the SCRAMBLE system that can redact all faces. 
 
 
-**thanks for reading this., goodbye**
+![banner](https://github.com/helios01k/face-detection-cv/blob/master/assets/banner.gif?raw=true)
 
-meow.
+I am currently using: **Mediapipe** and **OpenCV** for this project; I was originally using the built-in face detection in **opencv-python** however I plan to deploy this project on an embedded system and **mediapipe** seemed more effective for the job. 
+
+Open to any issues / ideas / contributions 
+
+_Please note: this project is made under python3.12x and will not work on 3.13x due to mediapipe not supporting 3.13x yet_
