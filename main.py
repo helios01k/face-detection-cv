@@ -7,9 +7,14 @@ from random import randint
 
 #face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
 mpf = mediapipe.solutions.face_detection
-#mpe = mediapipe.solutions.
+mpe = mediapipe.solutions.face_mesh
 face_detection = mpf.FaceDetection(model_selection=1, min_detection_confidence=0.3)
-#eye_detection =
+eye_detection = mpe.FaceMesh(
+    max_num_faces=1,
+    refine_landmarks=True,
+    min_detection_confidence=0.5,
+    min_tracking_confidence=0.5
+)
 
 class Redact:
     def __init__(self):
@@ -137,6 +142,9 @@ class Camera:
 
             rgb_frame = cv2.cvtColor(self.frame, cv2.COLOR_BGR2RGB)
             results_face = face_detection.process(rgb_frame)
+            results_mesh = eye_detection.process(rgb_frame)
+
+            h, w, _ = self.frame.shape
 
             #faces = face_cascade.detectMultiScale(grayscale, scaleFactor=1.1, minNeighbors=5, minSize=(30,30))
 
@@ -149,17 +157,31 @@ class Camera:
             if results_face.detections:
                 for detection in results_face.detections:
                     box = detection.location_data.relative_bounding_box
-                    h, w, _ = self.frame.shape
 
                     x = int(box.xmin * w)
                     y = int(box.ymin * h)
                     ww = int(box.width * w)
                     hh = int(box.height * h)
 
-                    Redact.create_box(frame=self.frame, x=x, y=y, w=ww, h=hh, _type="REDACT", count=6)
-                    Redact.create_box(frame=self.frame, x=x, y=y, w=ww, h=hh, _type = "SENSORY")
-                    print(f"confidence : {round(detection.score[0] * 100)}%") #=> percentage of confidence
+
+                    # TODO: temp tag
+                    #Redact.create_box(frame=self.frame, x=x, y=y, w=ww, h=hh, _type="REDACT", count=6)
+                    #Redact.create_box(frame=self.frame, x=x, y=y, w=ww, h=hh, _type = "SENSORY")
+                    #print(f"confidence : {round(detection.score[0] * 100)}%") #=> percentage of confidence
                     debug1.set_text(f"confidence score : {round(detection.score[0] * 100)}%")
+
+            if results_mesh.multi_face_landmarks:
+                for face_landmarks in results_mesh.multi_face_landmarks:
+
+                    for idx in [33, 133, 159, 145, 153, 173]:
+                        lm = face_landmarks.landmark[idx]
+                        lx, ly = int(lm.x * w), int(lm.y * h)
+
+
+                    for idx in [362, 263, 386, 374, 380, 390]:
+                        lm = face_landmarks.landmark[idx]
+                        lx, ly = int(lm.x * w), int(lm.y * h)
+
 
             debug1.draw(self.frame)
             heading1.draw(self.frame)
