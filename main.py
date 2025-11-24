@@ -7,7 +7,9 @@ from random import randint
 
 #face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
 mpf = mediapipe.solutions.face_detection
-face_detection = mpf.FaceDetection(model_selection=1, min_detection_confidence=0.57)
+#mpe = mediapipe.solutions.
+face_detection = mpf.FaceDetection(model_selection=1, min_detection_confidence=0.3)
+#eye_detection =
 
 class Redact:
     def __init__(self):
@@ -32,8 +34,8 @@ class Redact:
         r_point1 = (x1, y1)
         r_point2 = (x2, y2)
 
-        s_point1 = (x1 + padding, y1 + padding)
-        s_point2 = (x2 - padding, y2 - padding)
+        s_point1 = (x1 + padding, y1 + padding) # white bound x1
+        s_point2 = (x2 - padding, y2 - padding) #  white bound x2
 
         match _type:
             case "REDACT":
@@ -55,6 +57,7 @@ class Redact:
                     )
                     for i in range(count):
                        # TODO: The math here is not working as iW want it to; going to study this issue further tmr 25/11/25. Will comment out the problematic math for now
+                       # TODO: Document the maths furhter more.
 
                        # ALERT - I am going to just walkthrough the maths here in case i forget about it. We pick a random size *0.1 or *r_factor (1.5)
                        # and a random position inside the expanded area around the face (clamped by escape) the expanded area lets blocks spill outside the
@@ -67,6 +70,8 @@ class Redact:
                        # box random
                         rand_w = randint(int(w*0.1), min(int(w*r_factor), max_rand_w))
                         rand_h = randint(int(h*0.1), min(int(h*r_factor), max_rand_h))
+
+                       # for scramble boxe(s) only if >1
 
                         rx1 = randint(int(x - w*escape), int(x + w - rand_w + w*escape))
                         ry1 = randint(int(y - h*escape), int(y + h - rand_h + h*escape))
@@ -131,7 +136,7 @@ class Camera:
             self.frame = cv2.resize(self.frame, self.window_size, interpolation=cv2.INTER_AREA)
 
             rgb_frame = cv2.cvtColor(self.frame, cv2.COLOR_BGR2RGB)
-            results = face_detection.process(rgb_frame)
+            results_face = face_detection.process(rgb_frame)
 
             #faces = face_cascade.detectMultiScale(grayscale, scaleFactor=1.1, minNeighbors=5, minSize=(30,30))
 
@@ -141,8 +146,8 @@ class Camera:
                 #amplify_text.set_text("placeholder for now")
             #    Redact.create_box(frame=self.frame, x=x, y=y, w=w, h=h, _type="0")
 
-            if results.detections:
-                for detection in results.detections:
+            if results_face.detections:
+                for detection in results_face.detections:
                     box = detection.location_data.relative_bounding_box
                     h, w, _ = self.frame.shape
 
