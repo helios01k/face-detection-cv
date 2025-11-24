@@ -16,13 +16,13 @@ class Redact:
     @staticmethod
     def create_box(frame, x, y, w, h, _type, count = None):
 
-        # TODO : further optimize the math, rn it doesnt work as intended for random boxes
+        # TODO : further optimize the math, rn it doesnt work as intended for random boxes (COMPLETE)
         # TODO : Mahts complete. but further sorting is needed and cleanup in refactor
 
         # CONFIG
-        padding = 0 # white box
-        escape = 0.25
-        r_factor = 1.5
+        padding = 25 # white box
+        escape = 0.2
+        r_factor = 1.2
 
         x1 = x
         y1 = y
@@ -55,6 +55,10 @@ class Redact:
                     )
                     for i in range(count):
                        # TODO: The math here is not working as iW want it to; going to study this issue further tmr 25/11/25. Will comment out the problematic math for now
+
+                       # ALERT - I am going to just walkthrough the maths here in case i forget about it. We pick a random size *0.1 or *r_factor (1.5)
+                       # and a random position inside the expanded area around the face (clamped by escape) the expanded area lets blocks spill outside the
+                       # sensory box. (tldr: pick random sdize, random place in sensory + escape regions and draw)
 
                        # clamp
                         max_rand_w = int(w * (1 + 2*escape))
@@ -116,14 +120,15 @@ class Camera:
 
         while self.reval:
 
-            amplify_text = Text(default_position="TOP_LEFT")
-            amplify_text.set_text("SCRAMBLE_PROTOTYPE // HELIOS")
+            heading1 = Text(default_position="TOP_LEFT")
+            heading1.set_text("SCRAMBLE GOGGLES TECHNOLOGY // HELIOS (S.C.P)")
+
+            debug1 = Text(default_position="TOP_RIGHT")
+            debug1.set_text("null")
 
             self.reval, self.frame = self.vc.read()
             # BELOW <RESIZE FRAMES>
             self.frame = cv2.resize(self.frame, self.window_size, interpolation=cv2.INTER_AREA)
-
-            position_text = Text(default_position="TOP_LEFT")
 
             rgb_frame = cv2.cvtColor(self.frame, cv2.COLOR_BGR2RGB)
             results = face_detection.process(rgb_frame)
@@ -146,12 +151,14 @@ class Camera:
                     ww = int(box.width * w)
                     hh = int(box.height * h)
 
-                    Redact.create_box(frame=self.frame, x=x, y=y, w=ww, h=hh, _type="REDACT", count=8)
+                    Redact.create_box(frame=self.frame, x=x, y=y, w=ww, h=hh, _type="REDACT", count=6)
                     Redact.create_box(frame=self.frame, x=x, y=y, w=ww, h=hh, _type = "SENSORY")
                     print(f"confidence : {round(detection.score[0] * 100)}%") #=> percentage of confidence
+                    debug1.set_text(f"confidence score : {round(detection.score[0] * 100)}%")
 
-            amplify_text.draw(self.frame)
-            position_text.draw(self.frame)
+            debug1.draw(self.frame)
+            heading1.draw(self.frame)
+
             cv2.imshow(self.window_title, self.frame)
 
             key = cv2.waitKey(20)
@@ -176,6 +183,9 @@ class Text:
         h, w, _ = frame.shape  # frame height + width
 
         match self.default_position:
+
+            # TODO: BOTTOM POSITIONS ARE NOT WORKING
+
             case "TOP_LEFT":
                 return 10, 10 + text_h
 
