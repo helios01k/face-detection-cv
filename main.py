@@ -108,6 +108,7 @@ class Camera:
 
             #faces = face_cascade.detectMultiScale(grayscale, scaleFactor=1.1, minNeighbors=5, minSize=(30,30))
 
+            # TODO: Clean up older model code
             #for (x, y, w, h) in faces:
                 #position_text.set_text(f"detection: {x},{y} | {w}, {h}")
                 #amplify_text.set_text("placeholder for now")
