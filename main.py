@@ -1,22 +1,27 @@
 import cv2
 import mediapipe
+from random import randint
 
 # TODO: fps has been commented. this is because my current solution is only incrementing and not showing expected results, will fix later
 # TODO: no longer using cv2 for image recognition
 
 #face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
 mpf = mediapipe.solutions.face_detection
-face_detection = mpf.FaceDetection(model_selection=1, min_detection_confidence=0.6)
+face_detection = mpf.FaceDetection(model_selection=1, min_detection_confidence=0.57)
 
 class Redact:
     def __init__(self):
         pass
 
     @staticmethod
-    def create_box(frame, x, y, w, h, _type):
+    def create_box(frame, x, y, w, h, _type, count = None):
+
+        # TODO : further reoptimze the math, rn it doesnt work as intended for random boxes
 
         # this is for white box
         padding = 0
+        exp_cap = 300
+        exp_mul = 2
 
         x1 = x
         y1 = y
@@ -31,13 +36,26 @@ class Redact:
 
         match _type:
             case "REDACT":
-                cv2.rectangle(
-                    img=frame,
-                    pt1 = r_point1,
-                    pt2 = r_point2,
-                    color = (0,0,0),
-                    thickness = -1
-                )
+                if not count or count == 1:
+                    cv2.rectangle(
+                        img=frame,
+                        pt1 = r_point1,
+                        pt2 = r_point2,
+                        color = (0,0,0),
+                        thickness = -1
+                    )
+                else:
+                    for i in range(count):
+                       # TODO: The math here is not working as i want it to; going to study this issue further tmr 25/11/25. Will comment out the problematic math for now
+                        pass
+                       # cv2.rectangle(
+                       #     img=frame,
+                       #     pt1 = ((r_point1[0] + randint(150, exp_cap) * exp_mul) , (r_point1[1] + randint(150, exp_cap) * exp_mul)),
+                       #     pt2 = ((r_point2[0] - randint(150, exp_cap) * exp_mul) , (r_point2[1] - randint(150, exp_cap) * exp_mul)),
+                       #     color = (0,0,0),
+                       #     thickness= -1
+                       # )
+
             case "SENSORY":
                 cv2.rectangle(
                     img=frame,
@@ -105,9 +123,9 @@ class Camera:
                     ww = int(box.width * w)
                     hh = int(box.height * h)
 
-                    Redact.create_box(frame=self.frame, x=x, y=y, w=ww, h=hh, _type="REDACT")
+                    Redact.create_box(frame=self.frame, x=x, y=y, w=ww, h=hh, _type="REDACT", count=1)
                     Redact.create_box(frame=self.frame, x=x, y=y, w=ww, h=hh, _type = "SENSORY")
-                    # detection.score[0] => precentage of confidence
+                    print(f"confidence : {round(detection.score[0] * 100)}%") #=> percentage of confidence
 
             amplify_text.draw(self.frame)
             position_text.draw(self.frame)
