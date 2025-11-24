@@ -101,6 +101,27 @@ class Redact:
                     thickness = 2
                 )
 
+    # TODO: maybe merge below to create_box, once i got the logic sorted out
+    @staticmethod
+    def redact_eyes(frame, x1, y1, x2, y2):
+
+        # TODO: Padding is not working as expected. I might move to random EYE scramble if this doesn't work out for me.
+
+        print("redact_eyes() has been called")
+        padding = 50
+
+        point1 = (x1, y1)
+        point2 = (x2, y2)
+
+        cv2.rectangle(
+            img=frame,
+            pt1=point1,
+            pt2=point2,
+            color=(0,0,0),
+            thickness=-1
+        )
+
+
 class Camera:
     def __init__(self):
 
@@ -110,6 +131,9 @@ class Camera:
         self.window_title = "[/capture : debug-mode]"
         #self.width, self.height = 1280, 720
         self.width, self.height = 1080, 1080
+
+        self.EyeDetected = False
+        self.FaceDetected = False
 
         self.window_size = (1920, 1080)
 
@@ -154,7 +178,25 @@ class Camera:
                 #amplify_text.set_text("placeholder for now")
             #    Redact.create_box(frame=self.frame, x=x, y=y, w=w, h=h, _type="0")
 
+            # EYES FIRST (UI LAYER ISSUE)
+
+            if results_mesh.multi_face_landmarks:
+                self.EyeDetected = True
+                for face_landmarks in results_mesh.multi_face_landmarks:
+                    LEFT_EYE = [33, 133, 159, 145, 153, 173]
+                    RIGHT_EYE = [362, 263, 386, 374, 380, 390]
+
+                    lx1, ly1, lx2, ly2 = self.get_eye_box(face_landmarks.landmark, self.frame, LEFT_EYE)
+                    rx1, ry1, rx2, ry2 = self.get_eye_box(face_landmarks.landmark, self.frame, RIGHT_EYE)
+
+                    print(f"LEFT BOUND : {lx1} {ly1} {lx2} {ly2}")
+                    print(f"RIGHT BOUND : {rx1} {ry1} {rx2} {ry2}")
+
+                    Redact.redact_eyes(self.frame, lx1, ly1, lx2, ly2)
+                    Redact.redact_eyes(self.frame, rx1, ry1, rx2, ry2)
+
             if results_face.detections:
+                self.FaceDetected = True
                 for detection in results_face.detections:
                     box = detection.location_data.relative_bounding_box
 
@@ -165,28 +207,23 @@ class Camera:
 
 
                     # TODO: temp tag
-                    #Redact.create_box(frame=self.frame, x=x, y=y, w=ww, h=hh, _type="REDACT", count=6)
-                    #Redact.create_box(frame=self.frame, x=x, y=y, w=ww, h=hh, _type = "SENSORY")
-                    #print(f"confidence : {round(detection.score[0] * 100)}%") #=> percentage of confidence
+                    Redact.create_box(frame=self.frame, x=x, y=y, w=ww, h=hh, _type="REDACT", count=6)
+                    Redact.create_box(frame=self.frame, x=x, y=y, w=ww, h=hh, _type = "SENSORY")
+                    print(f"confidence : {round(detection.score[0] * 100)}%") #=> percentage of confidence
                     debug1.set_text(f"confidence score : {round(detection.score[0] * 100)}%")
 
-            if results_mesh.multi_face_landmarks:
-                for face_landmarks in results_mesh.multi_face_landmarks:
 
-                    for idx in [33, 133, 159, 145, 153, 173]:
-                        lm = face_landmarks.landmark[idx]
-                        lx, ly = int(lm.x * w), int(lm.y * h)
-
-
-                    for idx in [362, 263, 386, 374, 380, 390]:
-                        lm = face_landmarks.landmark[idx]
-                        lx, ly = int(lm.x * w), int(lm.y * h)
-
+            testing_text = Text(default_position="BOTTOM_LEFT")
+            testing_text.set_text(f"FACE DETECT: {self.FaceDetected} / EYE DETECT: {self.EyeDetected}")
+            testing_text.draw(self.frame)
 
             debug1.draw(self.frame)
             heading1.draw(self.frame)
 
             cv2.imshow(self.window_title, self.frame)
+
+            self.FaceDetected = False
+            self.EyeDetected = False
 
             key = cv2.waitKey(20)
             if key == 27:
@@ -196,6 +233,23 @@ class Camera:
     def force_exit(self):
         self.vc.release()
         cv2.destroyWindow(self.window_title)
+
+    @staticmethod
+    def get_eye_box(landmarks, frame, indices):
+        h, w, _ = frame.shape
+        xs, ys = [], []
+
+        for idx in indices:
+            lm = landmarks[idx]
+            xs.append(int(lm.x * w))
+            ys.append(int(lm.y * h))
+
+        return (
+            min(xs), # x1
+            min(ys), # y1
+            max(xs), # x2
+            max(ys) # y2
+        )
 
 
 class Text:
@@ -220,10 +274,10 @@ class Text:
                 return w - text_w - 10, 10 + text_h
 
             case "BOTTOM_LEFT":
-                return 10, h - 10
+                return 10, h - 45
 
             case "BOTTOM_RIGHT":
-                return w - text_w - 10, h - 10
+                return w - text_w - 10, h - 45
 
             case _:
                 return 10, 10 + text_h
