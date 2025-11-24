@@ -16,12 +16,13 @@ class Redact:
     @staticmethod
     def create_box(frame, x, y, w, h, _type, count = None):
 
-        # TODO : further reoptimze the math, rn it doesnt work as intended for random boxes
+        # TODO : further optimize the math, rn it doesnt work as intended for random boxes
+        # TODO : Mahts complete. but further sorting is needed and cleanup in refactor
 
-        # this is for white box
-        padding = 0
-        exp_cap = 300
-        exp_mul = 2
+        # CONFIG
+        padding = 0 # white box
+        escape = 0.25
+        r_factor = 1.5
 
         x1 = x
         y1 = y
@@ -45,16 +46,37 @@ class Redact:
                         thickness = -1
                     )
                 else:
+                    cv2.rectangle(
+                        img=frame,
+                        pt1 = r_point1,
+                        pt2 = r_point2,
+                        color = (0,0,0),
+                        thickness = -1
+                    )
                     for i in range(count):
-                       # TODO: The math here is not working as i want it to; going to study this issue further tmr 25/11/25. Will comment out the problematic math for now
-                        pass
-                       # cv2.rectangle(
-                       #     img=frame,
-                       #     pt1 = ((r_point1[0] + randint(150, exp_cap) * exp_mul) , (r_point1[1] + randint(150, exp_cap) * exp_mul)),
-                       #     pt2 = ((r_point2[0] - randint(150, exp_cap) * exp_mul) , (r_point2[1] - randint(150, exp_cap) * exp_mul)),
-                       #     color = (0,0,0),
-                       #     thickness= -1
-                       # )
+                       # TODO: The math here is not working as iW want it to; going to study this issue further tmr 25/11/25. Will comment out the problematic math for now
+
+                       # clamp
+                        max_rand_w = int(w * (1 + 2*escape))
+                        max_rand_h = int(h * (1 + 2*escape))
+
+                       # box random
+                        rand_w = randint(int(w*0.1), min(int(w*r_factor), max_rand_w))
+                        rand_h = randint(int(h*0.1), min(int(h*r_factor), max_rand_h))
+
+                        rx1 = randint(int(x - w*escape), int(x + w - rand_w + w*escape))
+                        ry1 = randint(int(y - h*escape), int(y + h - rand_h + h*escape))
+
+                        rx2 = rx1 + rand_w
+                        ry2 = ry1 + rand_h
+
+                        cv2.rectangle(
+                            img=frame,
+                            pt1=(rx1, ry1),
+                            pt2=(rx2, ry2),
+                            color=(0,0,0),
+                            thickness=-1
+                        )
 
             case "SENSORY":
                 cv2.rectangle(
@@ -124,7 +146,7 @@ class Camera:
                     ww = int(box.width * w)
                     hh = int(box.height * h)
 
-                    Redact.create_box(frame=self.frame, x=x, y=y, w=ww, h=hh, _type="REDACT", count=1)
+                    Redact.create_box(frame=self.frame, x=x, y=y, w=ww, h=hh, _type="REDACT", count=8)
                     Redact.create_box(frame=self.frame, x=x, y=y, w=ww, h=hh, _type = "SENSORY")
                     print(f"confidence : {round(detection.score[0] * 100)}%") #=> percentage of confidence
 
