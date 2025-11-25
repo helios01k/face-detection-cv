@@ -9,3 +9,5 @@ I am currently using: **Mediapipe** and **OpenCV** for this project; I was origi
 Open to any issues / ideas / contributions 
 
 _Please note: this project is made under python3.12x and will not work on 3.13x due to mediapipe not supporting 3.13x yet_
+
+**Current Project status: SCRAMBLE has been made; but I do want to add a text feature beside it, then I want to further push this to my embedded system which will require me to optimize this.**
