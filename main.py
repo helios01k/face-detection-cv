@@ -181,6 +181,10 @@ class Camera:
 
             # EYES FIRST (UI LAYER ISSUE)
 
+            positional_text = Text(default_position=None)
+            positional_text.set_text("[SCP-096] : DEECTED")
+            positional_text.color_text((255, 255, 255))
+
             if results_mesh.multi_face_landmarks:
                 self.EyeDetected = True
                 for face_landmarks in results_mesh.multi_face_landmarks:
@@ -210,6 +214,10 @@ class Camera:
                     # TODO: temp tag
                     Redact.create_box(frame=self.frame, x=x, y=y, w=ww, h=hh, _type="REDACT", count=6)
                     Redact.create_box(frame=self.frame, x=x, y=y, w=ww, h=hh, _type = "SENSORY")
+
+                    positional_text.move_text((x + ww - 425,  y + hh + 10))
+                    positional_text.set_scale(0.6)
+
                     print(f"confidence : {round(detection.score[0] * 100)}%") #=> percentage of confidence
                     debug1.set_text(f"confidence score : {round(detection.score[0] * 100)}%")
 
@@ -218,6 +226,7 @@ class Camera:
             testing_text.set_text(f"FACE DETECT: {self.FaceDetected} / EYE DETECT: {self.EyeDetected}")
             testing_text.draw(self.frame)
 
+            positional_text.draw(self.frame)
             debug1.draw(self.frame)
             heading1.draw(self.frame)
 
@@ -257,12 +266,29 @@ class Text:
     def __init__(self, default_position : str):
         self.text = None
         self.default_position = default_position
+        self.active_position = None
+        self.fScale = 1
+        self.color = (0,255,0)
 
     def set_text(self, _text):
         self.text = _text
 
+    def move_text(self, _ap):
+        self.active_position = _ap
+
+    def color_text(self, _c):
+        self.color = _c
+
+
+    # TODO: Add the maths to calculate what the scale of (tx) should be based on the size of the detectional factor 
+    def set_scale(self, _fs): # This is text scale
+        self.fScale = _fs
+
     def _getDefaultPosition(self, frame, text_w, text_h):
         h, w, _ = frame.shape  # frame height + width
+
+        if self.active_position: 
+            return self.active_position
 
         match self.default_position:
 
@@ -287,22 +313,23 @@ class Text:
         font = cv2.FONT_HERSHEY_SIMPLEX
         # this should be like fine-tuned
         # TODO: push below variables to self __init__ ?
-        fontScale = 1
         thickness = 2
 
         (text_w, text_h), baseline = cv2.getTextSize(
-            self.text, font, fontScale, thickness
+            self.text, font, self.fScale, thickness
         )
 
         org = self._getDefaultPosition(frame, text_w, text_h)
+        print(f"(current position) : {org}")
+        
 
         cv2.putText(
             img=frame,
             text=self.text,
             org=org,
             fontFace=font,
-            fontScale=fontScale,
-            color=(0, 255, 0),
+            fontScale=self.fScale,
+            color=self.color,
             thickness=thickness
         )
 
