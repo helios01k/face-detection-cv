@@ -5,6 +5,7 @@ from random import randint
 # TODO: fps has been commented. this is because my current solution is only incrementing and not showing expected results, will fix later
 # TODO: no longer using cv2 for image recognition
 # TODO: organise this mess
+# TODO: Make the detection text stuff cooler
 
 #face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
 mpf = mediapipe.solutions.face_detection
