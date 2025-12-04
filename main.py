@@ -323,7 +323,7 @@ class Text:
         )
 
         org = self._getDefaultPosition(frame, text_w, text_h)
-        print(f"(current position) : {org}")
+        print(f"(current position - text [?]) : {org}")
         
 
         cv2.putText(
