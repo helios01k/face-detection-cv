@@ -7,6 +7,8 @@ from random import randint
 # TODO: organise this mess
 # TODO: Make the detection text stuff cooler
 
+# TODO: make it detect objects such as glasses and hats taht are apllicble to end user
+
 #face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
 mpf = mediapipe.solutions.face_detection
 mpe = mediapipe.solutions.face_mesh
